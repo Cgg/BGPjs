@@ -1,5 +1,7 @@
-function State()
+function State( name )
 {
+  this.name = name;
+
   // the wiredEvents array holds what should be done upon reception of
   // events.
   // It is indexed by events' names.
