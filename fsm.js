@@ -17,7 +17,7 @@ FSM.prototype.STATES_NAMES =
  *  - TO = Time Out (a timer timed out)
  *  - M  = Message (a message was received)
  */
-FSM.prototype.EVENTS =
+FSM.prototype.EVENTS_NAMES =
 {
   BGP_Start               : "BGP_Start",
   BGP_Stop                : "BGP_Stop",
