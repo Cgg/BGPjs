@@ -1,3 +1,5 @@
+var State = require( './state' );
+
 /* Static variables declarations */
 
 /* Names of FSM states, to ease debugging */
@@ -31,7 +33,7 @@ FSM.prototype.EVENTS_NAMES =
   M_Open                  : "M_Open",
   M_KeepAlive             : "M_KeepAlive",
   M_Update                : "M_Update",
-  M_Notification          : "M_Notification",
+  M_Notification          : "M_Notification"
 };
 
 /* FSM's global variables (accessible by the states) */
@@ -50,12 +52,12 @@ FSM.prototype.VARIABLES =
 function FSM()
 {
   // create FSM's states
-  var Idle        = new State( this.STATES_NAMES.Idle );
-  var Connect     = new State( this.STATES_NAMES.Connect );
-  var Active      = new State( this.STATES_NAMES.Active );
-  var OpenSent    = new State( this.STATES_NAMES.OpenSent );
-  var OpenConfirm = new State( this.STATES_NAMES.OpenConfirm );
-  var Established = new State( this.STATES_NAMES.Established );
+  var Idle        = new State.State( this.STATES_NAMES.Idle );
+  var Connect     = new State.State( this.STATES_NAMES.Connect );
+  var Active      = new State.State( this.STATES_NAMES.Active );
+  var OpenSent    = new State.State( this.STATES_NAMES.OpenSent );
+  var OpenConfirm = new State.State( this.STATES_NAMES.OpenConfirm );
+  var Established = new State.State( this.STATES_NAMES.Established );
 
   // Link the states together with events and transitions
   // TODO
@@ -67,10 +69,12 @@ function FSM()
   // state keeps references on some other states.
 
   // Init FSM global variables / objects
-};
+}
 
 /* FSM's event handler */
 FSM.prototype.Handle = function( evt )
 {
   this.currentState = this.currentState.Handle( evt );
 };
+
+exports.FSM = FSM;
