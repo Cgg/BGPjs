@@ -48,28 +48,35 @@ FSM.prototype.VARIABLES =
 };
 
 
+FSM.prototype.UniqueInstance = null;
+
 /* Functions' definitions */
 
 function FSM()
 {
-  // create FSM's states
-  var Idle        = new State.State( this.STATES_NAMES.Idle );
-  var Connect     = new State.State( this.STATES_NAMES.Connect );
-  var Active      = new State.State( this.STATES_NAMES.Active );
-  var OpenSent    = new State.State( this.STATES_NAMES.OpenSent );
-  var OpenConfirm = new State.State( this.STATES_NAMES.OpenConfirm );
-  var Established = new State.State( this.STATES_NAMES.Established );
+  if( this.UniqueInstance === null )
+  {
+    // create FSM's states
+    var Idle        = new State.State( this.STATES_NAMES.Idle );
+    var Connect     = new State.State( this.STATES_NAMES.Connect );
+    var Active      = new State.State( this.STATES_NAMES.Active );
+    var OpenSent    = new State.State( this.STATES_NAMES.OpenSent );
+    var OpenConfirm = new State.State( this.STATES_NAMES.OpenConfirm );
+    var Established = new State.State( this.STATES_NAMES.Established );
 
-  // Link the states together with events and transitions
-  // TODO
+    // Link the states together with events and transitions
+    // TODO
 
-  // init current state variable
-  this.currentState = Idle;
+    // init current state variable
+    this.currentState = Idle;
 
-  // at the end of the scope, the states should not be deleted, since each
-  // state keeps references on some other states.
+    // at the end of the scope, the states should not be deleted, since each
+    // state keeps references on some other states.
 
-  // Init FSM global variables / objects
+    // Init FSM global variables / objects
+    
+    this.UniqueInstance = this;
+  }
 }
 
 /* FSM's event handler */
