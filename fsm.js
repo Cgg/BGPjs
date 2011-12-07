@@ -94,7 +94,13 @@ FSM.prototype.Handle = function( evt )
 FSM.prototype.Start = function()
 {
   console.log( "Starting FSM." );
-  this.currentState.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Start) );
+  this.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Start) );
+};
+
+FSM.prototype.Stop = function()
+{
+  console.log( "Stopping FSM." );
+  this.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES[ BGP_Stop ] ) );
 };
 
 exports.FSM = FSM;
