@@ -4,7 +4,7 @@ var FSM_Event = require( './fsm_event' );
 /* Static variables declarations */
 
 /* Names of FSM states, to ease debugging */
-STATES_NAMES =
+FSM.prototype.STATES_NAMES =
 {
   Idle        : "Idle",
   Connect     : "Connect",
@@ -20,7 +20,7 @@ STATES_NAMES =
  *  - TO = Time Out (a timer timed out)
  *  - M  = Message (a message was received)
  */
-EVENTS_NAMES =
+FSM.prototype.EVENTS_NAMES =
 {
   BGP_Start               : "BGP_Start",
   BGP_Stop                : "BGP_Stop",
@@ -38,7 +38,7 @@ EVENTS_NAMES =
 };
 
 /* FSM's global variables (accessible by the states) */
-VARIABLES =
+FSM.prototype.VARIABLES =
 {
   ConnectTimer       : "todo",  // big TODO over here
   HoldTimer          : "todo",
@@ -50,7 +50,7 @@ VARIABLES =
 
 /* Functions' definitions */
 
-function Init()
+function FSM()
 {
   // create FSM's states
   var Idle        = new State.State( this.STATES_NAMES.Idle );
