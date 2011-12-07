@@ -1,3 +1,5 @@
+/* Main FSM file */
+
 var State = require( './state' );
 var FSM_Event = require( './fsm_event' );
 
@@ -82,7 +84,9 @@ function FSM()
 /* FSM's event handler */
 FSM.prototype.Handle = function( evt )
 {
+  console.log( "Received event of type " + evt.type + " in state " + this.currentState.name );
   this.currentState = this.currentState.Handle( evt );
+  console.log( "Next state : " + this.currentState.name );
 };
 
 
