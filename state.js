@@ -15,7 +15,7 @@ function State( name )
   this.wiredEvents = new Array( 0 );
 
   // ...
-};
+}
 
 /* Connect this state to another via a transition triggered by an event */
 State.prototype.Connect = function( state, evt, transition )
@@ -39,3 +39,5 @@ State.prototype.DefaultBehavior = function()
 {
   return this;
 };
+
+exports.State = State;
