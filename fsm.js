@@ -73,9 +73,17 @@ function FSM()
 }
 
 /* FSM's event handler */
-function Handle( evt )
+FSM.prototype.Handle = function( evt )
 {
   this.currentState = this.currentState.Handle( evt );
+};
+
+
+/* Start the fsm */
+FSM.prototype.Start = function()
+{
+  console.log( "Starting FSM." );
+  this.currentState.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Start) );
 };
 
 exports.FSM = FSM;
