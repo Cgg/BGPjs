@@ -1,7 +1,7 @@
 /* Static variables declarations */
 
 /* Names of FSM states, to ease debugging */
-FSM.prototype.STATES_NAMES =
+STATES_NAMES =
 {
   Idle        : "Idle",
   Connect     : "Connect",
@@ -17,7 +17,7 @@ FSM.prototype.STATES_NAMES =
  *  - TO = Time Out (a timer timed out)
  *  - M  = Message (a message was received)
  */
-FSM.prototype.EVENTS_NAMES =
+EVENTS_NAMES =
 {
   BGP_Start               : "BGP_Start",
   BGP_Stop                : "BGP_Stop",
@@ -31,11 +31,11 @@ FSM.prototype.EVENTS_NAMES =
   M_Open                  : "M_Open",
   M_KeepAlive             : "M_KeepAlive",
   M_Update                : "M_Update",
-  M_Notification          : "M_Notification",
+  M_Notification          : "M_Notification"
 };
 
 /* FSM's global variables (accessible by the states) */
-FSM.prototype.VARIABLES =
+VARIABLES =
 {
   ConnectTimer       : "todo",  // big TODO over here
   HoldTimer          : "todo",
@@ -47,7 +47,7 @@ FSM.prototype.VARIABLES =
 
 /* Functions' definitions */
 
-function FSM()
+function Init()
 {
   // create FSM's states
   var Idle        = new State( this.STATES_NAMES.Idle );
@@ -67,10 +67,10 @@ function FSM()
   // state keeps references on some other states.
 
   // Init FSM global variables / objects
-};
+}
 
 /* FSM's event handler */
-FSM.prototype.Handle = function( evt )
+function Handle( evt )
 {
   this.currentState = this.currentState.Handle( evt );
 };
