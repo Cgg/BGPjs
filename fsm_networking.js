@@ -69,11 +69,14 @@ function SendOpenMessage( /* message parameters */ )
 
 /* FSM_Server */
 
-function StartServer( port, host )
+function StartServer( port, host, F )
 {
+  fsmCallbackPtr = F;
+
   fsmServer = net.createServer( sockHandle );
 
   fsmServer.listen( port, host );
 }
 
 exports.StartSocket = StartSocket;
+exports.StartServer = StartServer;
