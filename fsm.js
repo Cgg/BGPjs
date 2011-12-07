@@ -1,4 +1,5 @@
 var State = require( './state' );
+var FSM_Event = require( './fsm_event' );
 
 /* Static variables declarations */
 

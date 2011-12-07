@@ -6,3 +6,5 @@ function FSM_Event( type )
 {
   this.type = type;
 }
+
+exports.FSM_Event = FSM_Event;
