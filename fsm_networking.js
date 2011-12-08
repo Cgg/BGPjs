@@ -135,6 +135,17 @@ function SendOpenMessage( /* message parameters ? */ )
   msg.WriteUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
   msg.WriteUInt16BE( fsmCallbackPtr.HoldTime, 22 );  // HoldTime, Big Endian
 
+  // write the bgp identifier
+  var local_address = ( Conf.listenHost !== 'localhost' ? Conf.listenHost : '127.0.0.1' );
+  var pieces = local_address.split( '.' );
+
+  for( i = 0 ; i < 4 ; i++ )
+  {
+    msg.WriteUInt8( parseInt( pieces[ i ], 2 ), 24 + i );
+  }
+
+  msg.WriteUInt8( 0, 28 ); // number of optional parameters
+
   // and bang !
   fsmSocket.write( msg );
 }
