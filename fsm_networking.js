@@ -7,6 +7,7 @@ var net = require( 'net' );
 
 var FSM       = require( './fsm' );
 var FSM_Event = require( './fsm_event' );
+var Conf      = require( './conf' );
 
 /* FSM_Socket */
 
