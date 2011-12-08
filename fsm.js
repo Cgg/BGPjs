@@ -272,6 +272,13 @@ FSM.prototype.ConnectRetryTimeOut = function()
     new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_ConnectRetry ) );
 };
 
+ProcessUpdateMsg = function( msg )
+{
+  console.log( msg );
+
+  // TODO ?
+};
+
 RestartTimer = function( timerId )
 {
   if( timerId !== null )
