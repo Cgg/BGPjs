@@ -47,7 +47,7 @@ FSM.prototype.MESSAGE_TYPES =
 {
   OPEN         : 1,
   UPDATE       : 2,
-  NOTIFICATIOn : 3,
+  NOTIFICATION : 3,
   KEEPALIVE    : 4
 };
 
@@ -224,7 +224,7 @@ function FSM()
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Update_BAD, function( evt ){
-      // send NOTIFICATIOn
+      // send NOTIFICATION
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
