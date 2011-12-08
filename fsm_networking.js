@@ -150,16 +150,42 @@ function SendOpenMessage( /* message parameters ? */ )
   fsmSocket.write( msg );
 }
 
-function SendUpdateMessage()
+function SendUpdateMessage( /* Update parameters ... */ )
 {
+  var msg = new Buffer( 23 );
+
+  WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.UPDATE, msg );
+
+  // set both withdrawn route and total path attribute lenght to 0
+  msg.WriteUInt16BE( 0, 19 );
+  msg.WriteUInt16BE( 0, 21 );
+
+  fsmSocket.write( msg );
 }
 
 function SendKeepAliveMessage()
 {
+  var msg = new Buffer( 19 );
+
+  // format message...
+  WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.KEEPALIVE, msg );
+
+  // and bang !
+  fsmSocket.write( msg );
 }
 
-function SendNotificationMessage()
+function SendNotificationMessage( errCode, errSubcode )
 {
+  var msg = new Buffer( 21 );
+
+  // format message...
+  WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.NOTIFICATION, msg );
+
+  msg.WriteUInt8( errCode, 19 );
+  msg.WriteUInt8( errSubcode, 20 );
+
+  // and bang !
+  fsmSocket.write( msg );
 }
 
 /* FSM_Server */
