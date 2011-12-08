@@ -129,10 +129,10 @@ function SendOpenMessage( /* message parameters ? */ )
   var msg = new Buffer( 29 );
 
   // format message...
-  WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.OPEN );
+  WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.OPEN, msg );
 
-  msg.WriteUInt8( 4, 19 ); // BGP version
-  msg.WriteUInt16BE( fsmCallbackPtr.AS_Number, 20 ); // AS_Number, Big Endian
+  msg.WriteUInt8( Conf.BGP_Version, 19 ); // BGP version
+  msg.WriteUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
   msg.WriteUInt16BE( fsmCallbackPtr.HoldTime, 22 );  // HoldTime, Big Endian
 
   // and bang !
