@@ -61,6 +61,8 @@ FSM.prototype.VARIABLES =
   ConnectionFromPeer : "todo"
 };
 
+FSM.prototype.holdTimerValue = 4 * 60000;
+
 FSM.prototype.UniqueInstance = null;
 
 /* Functions' definitions */
