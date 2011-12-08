@@ -155,7 +155,12 @@ function FSM()
     } );
 
     OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open_OK, function( evt ){
-      // send KEEP_ALIVE
+      FSM.prototype.KeepAliveTimer = setTimeout( FSM.prototype.KeepAliveTimeOut,
+                                                 Conf.keepAliveTO );
+
+      // TODO reset Hold timer with new value from open message
+
+      Network.SendKeepAliveMessage();
     } );
 
     OpenSent.Connect( Idle, this.EVENTS_NAMES.M_Open_BAD, function( evt ){
@@ -175,8 +180,8 @@ function FSM()
     } );
 
     OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
-      // restart KeepAlive timer
-      // send KEEP_ALIVE
+      RestartTimer( FSM.prototype.KeepAliveTimer );
+      SendKeepAliveMessage();
     } );
 
     OpenConfirm.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
@@ -201,18 +206,18 @@ function FSM()
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
-      // Restart KeepAlive timer
-      // Send KEEP_ALIVE
+      RestartTimer( FSM.prototype.KeepAliveTimer );
+      Network.SendKeepAliveMessage();
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
-      // Restart Hold timer
-      // Send KEEP_ALIVE
+      RestartTimer( FSM.prototype.HoldTimer );
+      Network.SendKeepAliveMessage();
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.M_Update_OK, function( evt ){
-      // process update msg
-      // send UPDATE
+      ProcessUpdateMsg( evt.msg );
+      SendUpdateMessage();
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Update_BAD, function( evt ){
