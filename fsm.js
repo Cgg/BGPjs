@@ -54,9 +54,9 @@ FSM.prototype.MESSAGE_TYPES =
 /* FSM's global variables (accessible by the states) */
 FSM.prototype.VARIABLES =
 {
-  ConnectTimer       : 0,
-  HoldTimer          : 0,
-  KeepAliveTimer     : 0,
+  ConnectTimer       : null,
+  HoldTimer          : null,
+  KeepAliveTimer     : null,
   ConnectionToPeer   : "todo",
   ConnectionFromPeer : "todo"
 };
