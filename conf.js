@@ -1,3 +1,4 @@
+exports.BGP_Version = 4;
 exports.port = 5000;
 exports.host = 'localhost';
 exports.listenHost = 'localhost';
