@@ -106,15 +106,11 @@ function FSM()
     } );
 
     Connect.Connect( Active, this.EVENTS_NAMES.BGP_TC_OpenFailed, function( evt ){
-      clearTimeout( FSM.prototype.ConnectTimer );
-      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
-                                               Conf.connectRetryTO );
+      RestartTimer( FSM.prototype.ConnectTimer );
     } );
 
     Connect.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
-      clearTimeout( FSM.prototype.ConnectTimer );
-      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
-                                               Conf.connectRetryTO );
+      RestartTimer( FSM.prototype.ConnectTimer );
 
       Network.StopSocket();
       Network.StartSocket();
@@ -136,15 +132,11 @@ function FSM()
       Network.StopServer();
       Network.StartServer();
 
-      clearTimeout( FSM.prototype.ConnectTimer );
-      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
-                                               Conf.connectRetryTO );
+      RestartTimer( FSM.prototype.ConnectTimer );
     } );
 
     Active.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
-      clearTimeout( FSM.prototype.ConnectTimer );
-      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
-                                               Conf.connectRetryTO );
+      RestartTimer( FSM.prototype.ConnectTimer );
 
       Network.StopSocket();
       Network.StartSocket();
@@ -191,7 +183,7 @@ function FSM()
 
     OpenConfirm.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
       // complete initialization -> ??
-      // restart Hold timer
+      RestartTimer( FSM.prototype.HoldTimer );
     } );
 
     OpenConfirm.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
@@ -275,6 +267,19 @@ FSM.prototype.ConnectRetryTimeOut = function()
 {
   exports.UniqueInstance.Handle( 
     new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_ConnectRetry ) );
+};
+
+RestartTimer = function( timerId )
+{
+  if( timerId !== null )
+  {
+    var timeout  = timerId._idleTimeout;
+    var callback = timerId._onTimeout;
+
+    clearTimeout( timerId );
+
+    FSM.prototype.ConnectTimer = setTimeout( callback, timeout );
+  }
 };
 
 FSM.prototype.HoldTimeOut = function()
