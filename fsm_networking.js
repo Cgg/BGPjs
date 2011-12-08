@@ -90,7 +90,9 @@ function StopSocket()
 // read and consume the bgp header from incoming message
 function ReadHeader()
 {
-  var header = incomingMessage.slice( 0, HEADER_LENGHT - 1 );
+  var header = incomingMessage.slice( 0, HEADER_LENGHT );
+
+  // TODO
 
   headerRead = true;
 }
@@ -98,13 +100,17 @@ function ReadHeader()
 function ReadMessage()
 {
   var message = incomingMessage.slice( 0, messageLength );
+  var msg     = {};
 
-  // determine message type and extract info accordingly
+  // determine message type and extract info into msg accordingly
+  // TODO
 
   headerRead = false;
 
   // finally, call the callback
-  var evt = new FSM_Event.FSM_Event();
+  var evt = new FSM_Event.FSM_Event( /* event type */ );
+
+  evt.msg = msg;
 
   fsmCallbackPtr.Handle( evt );
 }
