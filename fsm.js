@@ -99,9 +99,8 @@ function FSM()
     Connect.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
       clearTimeout( FSM.prototype.ConnectTimer );
 
-      // Complete initialization -> ??
+      // TODO Complete initialization -> ?? set hold
 
-      // Send OPEN message
       Network.SendOpenMessage();
     } );
 
@@ -122,9 +121,8 @@ function FSM()
     Active.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
       clearTimeout( FSM.prototype.ConnectTimer );
 
-      // Complete initialization -> ??
+      // TODO Complete initialization -> ?? set hold
 
-      // Send OPEN message
       Network.SendOpenMessage();
     } );
 
@@ -224,7 +222,7 @@ function FSM()
     Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
       // close transport connection
       // release resources
-      // send NOTIFICATIOn
+      // send NOTIFICATION
     } );
 
     // init current state variable
