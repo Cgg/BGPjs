@@ -1,6 +1,8 @@
 /* Main FSM file */
 
-var State = require( './state' );
+var Conf      = require( './conf.js' );
+var Network   = require( './fsm_networking' );
+var State     = require( './state' );
 var FSM_Event = require( './fsm_event' );
 
 /* Static variables declarations */
@@ -39,16 +41,23 @@ FSM.prototype.EVENTS_NAMES =
   M_Notification          : "M_Notification"
 };
 
+FSM.prototype.MESSAGE_TYPES =
+{
+  OPEN         : 1,
+  UPDATE       : 2,
+  NOTIFICATIOn : 3,
+  KEEPALIVE    : 4
+};
+
 /* FSM's global variables (accessible by the states) */
 FSM.prototype.VARIABLES =
 {
-  ConnectTimer       : "todo",  // big TODO over here
-  HoldTimer          : "todo",
-  KeepAliveTimer     : "todo",
+  ConnectTimer       : 0,
+  HoldTimer          : 0,
+  KeepAliveTimer     : 0,
   ConnectionToPeer   : "todo",
   ConnectionFromPeer : "todo"
 };
-
 
 FSM.prototype.UniqueInstance = null;
 
@@ -67,7 +76,92 @@ function FSM()
     var Established = new State.State( this.STATES_NAMES.Established );
 
     // Link the states together with events and transitions
-    // TODO
+    // TODO : default behavior
+    // IDLE
+    Idle.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){
+      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
+                                               Conf.connectRetryTO );
+
+      Network.StartSocket( Conf.port, Conf.host, FSM.prototype.UniqueInstance );
+      Network.StartServer( Conf.port, Conf.listenHost, FSM.prototype.UniqueInstance );
+    } );
+
+    // CONNECT
+    Connect.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
+
+    Connect.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
+      clearTimeout( FSM.prototype.ConnectTimer );
+
+      // Complete initialization -> ??
+
+      // Send OPEN message
+      Network.SendOpenMessage();
+    } );
+
+    Connect.Connect( Active, this.EVENTS_NAMES.BGP_TC_OpenFailed, function( evt ){
+      clearTimeout( FSM.prototype.ConnectTimer );
+      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
+                                               Conf.connectRetryTO );
+    } );
+
+    Connect.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
+      clearTimeout( FSM.prototype.ConnectTimer );
+      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
+                                               Conf.connectRetryTO );
+
+      Network.StopSocket();
+      Network.StartSocket();
+    } );
+
+    // ACTIVE
+    Active.Connect( Active, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
+
+    Active.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
+      clearTimeout( FSM.prototype.ConnectTimer );
+
+      // Complete initialization -> ??
+
+      // Send OPEN message
+      Network.SendOpenMessage();
+    } );
+
+    Active.Connect( Active, this.EVENTS_NAMES.BGP_TC_OpenFailed, function( evt ){
+      Network.StopServer();
+      Network.StartServer();
+
+      clearTimeout( FSM.prototype.ConnectTimer );
+      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
+                                               Conf.connectRetryTO );
+    } );
+
+    Active.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
+      clearTimeout( FSM.prototype.ConnectTimer );
+      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
+                                               Conf.connectRetryTO );
+
+      Network.StopSocket();
+      Network.StartSocket();
+    } );
+
+    // OPEN SENT
+    OpenSent.Connect( OpenSent, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
+
+    OpenSent.Connect( Active, this.EVENTS_NAMES.BGP_TC_Closed, function( evt ){
+      Network.StopSocket();
+      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
+                                               Conf.connectRetryTO );
+    } );
+
+    OpenSent.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
+      Network.StopSocket();
+      Network.StopServer();
+    } );
+
+    OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open, function( evt ){
+      // check the OPEN message
+      // if correct send KEEP_ALIVE
+      // if not find a way to return to Idle.
+    } );
 
     // init current state variable
     this.currentState = Idle;
@@ -77,7 +171,7 @@ function FSM()
 
     // Init FSM global variables / objects
     
-    this.UniqueInstance = this;
+    exports.UniqueInstance = this;
   }
 }
 
@@ -89,18 +183,38 @@ FSM.prototype.Handle = function( evt )
   console.log( "Next state : " + this.currentState.name );
 };
 
-
 /* Start the fsm */
 FSM.prototype.Start = function()
 {
   console.log( "Starting FSM." );
-  this.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Start) );
+
+  var evt = new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Start);
+
+  this.Handle( evt );
 };
 
 FSM.prototype.Stop = function()
 {
   console.log( "Stopping FSM." );
-  this.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES[ BGP_Stop ] ) );
+  this.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Stop ) );
+};
+
+FSM.prototype.ConnectRetryTimeOut = function()
+{
+  exports.UniqueInstance.Handle( 
+    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_ConnectRetry ) );
+};
+
+FSM.prototype.HoldTimeOut = function()
+{
+  FSM.UniqueInstance.Handle(
+    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_Hold ) );
+};
+
+FSM.prototype.KeepAliveTimeOut = function()
+{
+  FSM.prototype.UniqueInstance.Handle(
+    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_KeepAlive ) );
 };
 
 exports.FSM = FSM;

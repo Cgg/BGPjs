@@ -12,7 +12,7 @@ function State( name )
   // Adding parameters to transition (that would be carried by the
   // event) is left to the user's discretion.
 
-  this.wiredEvents = new Array( 0 );
+  this.wiredEvents = {};
 
   // ...
 }
@@ -20,19 +20,22 @@ function State( name )
 /* Connect this state to another via a transition triggered by an event */
 State.prototype.Connect = function( state, evt, transition )
 {
-  wiredEvents.push( { transitionFct : transition, nextState : state } );
+  this.wiredEvents[ evt ] = { transitionFct : transition, nextState : state };
 };
 
 /* Handle called upon reception of an event */
 State.prototype.Handle = function( evt )
 {
   // look for evt in wiredEvt
-
-  // if evt found, exec transitionFct and return nextState
-
-  // else
-
-  return this.DefaultBehavior();
+  if( this.wiredEvents[ evt.type ] !== undefined )
+  {
+    this.wiredEvents[ evt.type ].transitionFct( evt );
+    return this.wiredEvents[ evt.type ].nextState;
+  }
+  else
+  {
+    return this.DefaultBehavior();
+  }
 };
 
 State.prototype.DefaultBehavior = function()
