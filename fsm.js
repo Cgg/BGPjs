@@ -35,9 +35,11 @@ FSM.prototype.EVENTS_NAMES =
   TO_ConnectRetry         : "TO_ConnectRetry",
   TO_Hold                 : "TO_Hold",
   TO_KeepAlive            : "TO_KeepAlive",
-  M_Open                  : "M_Open",
+  M_Open_OK               : "M_Open_OK",
+  M_Open_BAD              : "M_Open_BAD",
   M_KeepAlive             : "M_KeepAlive",
-  M_Update                : "M_Update",
+  M_Update_OK             : "M_Update_OK",
+  M_Update_BAD            : "M_Update_BAD",
   M_Notification          : "M_Notification"
 };
 
@@ -76,7 +78,10 @@ function FSM()
     var Established = new State.State( this.STATES_NAMES.Established );
 
     // Link the states together with events and transitions
-    // TODO : default behavior
+    // TODO : default behavior (consisting of returning to Idle and releasing
+    // everything + send NOTIFICATION for OpenSent/Confirm and Established
+    // states)
+
     // IDLE
     Idle.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){
       FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
@@ -157,10 +162,75 @@ function FSM()
       Network.StopServer();
     } );
 
-    OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open, function( evt ){
-      // check the OPEN message
-      // if correct send KEEP_ALIVE
-      // if not find a way to return to Idle.
+    OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open_OK, function( evt ){
+      // send KEEP_ALIVE
+    } );
+
+    OpenSent.Connect( Idle, this.EVENTS_NAMES.M_Open_BAD, function( evt ){
+      // release resources
+      // send NOTIFICATION
+    } );
+
+    // OPEN CONFIRM
+    OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
+
+    OpenConfirm.Connect( Idle, this.EVENTS_NAMES.BGP_TC_Closed, function( evt ){
+      // release resources
+    } );
+
+    OpenConfirm.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
+      // release resources
+    } );
+
+    OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
+      // restart KeepAlive timer
+      // send KEEP_ALIVE
+    } );
+
+    OpenConfirm.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
+      // complete initialization -> ??
+      // restart Hold timer
+    } );
+
+    OpenConfirm.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
+      // close connection
+      // release resource
+    } );
+
+    // ESTABLISHED
+    Established.Connect( Established, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
+
+    Established.Connect( Idle, this.EVENTS_NAMES.BGP_TC_Closed, function( evt ){
+      // release resources
+    } );
+
+    Established.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
+      // release resources
+    } );
+
+    Established.Connect( Established, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
+      // Restart KeepAlive timer
+      // Send KEEP_ALIVE
+    } );
+
+    Established.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
+      // Restart Hold timer
+      // Send KEEP_ALIVE
+    } );
+
+    Established.Connect( Established, this.EVENTS_NAMES.M_Update_OK, function( evt ){
+      // process update msg
+      // send UPDATE
+    } );
+
+    Established.Connect( Idle, this.EVENTS_NAMES.M_Update_BAD, function( evt ){
+      // send NOTIFICATIOn
+    } );
+
+    Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
+      // close transport connection
+      // release resources
+      // send NOTIFICATIOn
     } );
 
     // init current state variable
