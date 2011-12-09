@@ -1,5 +1,7 @@
 /* Main FSM file */
 
+UniqueInstance = null;
+
 var Conf      = require( './conf.js' );
 var Network   = require( './fsm_networking' );
 var State     = require( './state' );
@@ -62,7 +64,7 @@ FSM.prototype.ERRCODES =
 };
 
 /* FSM's global variables (accessible by the states) */
-FSM.prototype.VARIABLES =
+VARIABLES =
 {
   ConnectTimer       : null,
   HoldTimer          : null,
@@ -73,14 +75,15 @@ FSM.prototype.VARIABLES =
 
 FSM.prototype.holdTimerValue = 4 * 60000;
 
-FSM.prototype.UniqueInstance = null;
-
 /* Functions' definitions */
 
 function FSM()
 {
-  if( this.UniqueInstance === null )
+  if( UniqueInstance === null )
   {
+    UniqueInstance = this;
+    exports.UniqueInstance = UniqueInstance;
+
     // create FSM's states
     var Idle        = new State.State( this.STATES_NAMES.Idle );
     var Connect     = new State.State( this.STATES_NAMES.Connect );
@@ -96,18 +99,19 @@ function FSM()
 
     // IDLE
     Idle.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){
-      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
-                                               Conf.connectRetryTO );
+      debugger;
+      VARIABLES.ConnectTimer = setTimeout( ConnectRetryTimeOut,
+                                           Conf.connectRetryTO );
 
-      Network.StartSocket( Conf.port, Conf.host, FSM.prototype.UniqueInstance );
-      Network.StartServer( Conf.port, Conf.listenHost, FSM.prototype.UniqueInstance );
+      Network.StartSocket( Conf.port, Conf.host, UniqueInstance );
+      Network.StartServer( Conf.port, Conf.listenHost, UniqueInstance );
     } );
 
     // CONNECT
     Connect.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
 
     Connect.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
-      clearTimeout( FSM.prototype.ConnectTimer );
+      clearTimeout( VARIABLES.ConnectTimer );
 
       // TODO Complete initialization -> ?? set hold
 
@@ -115,11 +119,11 @@ function FSM()
     } );
 
     Connect.Connect( Active, this.EVENTS_NAMES.BGP_TC_OpenFailed, function( evt ){
-      RestartTimer( FSM.prototype.ConnectTimer );
+      RestartTimer( VARIABLES.ConnectTimer );
     } );
 
     Connect.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
-      RestartTimer( FSM.prototype.ConnectTimer );
+      RestartTimer( VARIABLES.ConnectTimer );
 
       Network.StopSocket();
       Network.StartSocket();
@@ -129,7 +133,7 @@ function FSM()
     Active.Connect( Active, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
 
     Active.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
-      clearTimeout( FSM.prototype.ConnectTimer );
+      clearTimeout( VARIABLES.ConnectTimer );
 
       // TODO Complete initialization -> ?? set hold
 
@@ -140,11 +144,11 @@ function FSM()
       Network.StopServer();
       Network.StartServer();
 
-      RestartTimer( FSM.prototype.ConnectTimer );
+      RestartTimer( VARIABLES.ConnectTimer );
     } );
 
     Active.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
-      RestartTimer( FSM.prototype.ConnectTimer );
+      RestartTimer( VARIABLES.ConnectTimer );
 
       Network.StopSocket();
       Network.StartSocket();
@@ -155,8 +159,8 @@ function FSM()
 
     OpenSent.Connect( Active, this.EVENTS_NAMES.BGP_TC_Closed, function( evt ){
       Network.StopSocket();
-      FSM.prototype.ConnectTimer = setTimeout( FSM.prototype.ConnectRetryTimeOut,
-                                               Conf.connectRetryTO );
+      VARIABLES.ConnectTimer = setTimeout( ConnectRetryTimeOut,
+                                           Conf.connectRetryTO );
     } );
 
     OpenSent.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
@@ -165,10 +169,13 @@ function FSM()
     } );
 
     OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open_OK, function( evt ){
-      FSM.prototype.KeepAliveTimer = setTimeout( FSM.prototype.KeepAliveTimeOut,
-                                                 Conf.keepAliveTO );
+      VARIABLES.KeepAliveTimer = setTimeout( KeepAliveTimeOut,
+                                              Conf.keepAliveTO );
 
-      // TODO reset Hold timer with new value from open message
+      // restart Hold Timer with its new timeout value
+      clearTimeout( VARIABLES.HoldTimer );
+      VARIABLES.HoldTimer = setTimeout( HoldTimeOut,
+                                            FSM.prototype.holdTimerValue );
 
       Network.SendKeepAliveMessage();
     } );
@@ -190,13 +197,13 @@ function FSM()
     } );
 
     OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
-      RestartTimer( FSM.prototype.KeepAliveTimer );
+      RestartTimer( VARIABLES.KeepAliveTimer );
       SendKeepAliveMessage();
     } );
 
     OpenConfirm.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
       // complete initialization -> ??
-      RestartTimer( FSM.prototype.HoldTimer );
+      RestartTimer( VARIABLES.HoldTimer );
     } );
 
     OpenConfirm.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
@@ -216,12 +223,12 @@ function FSM()
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
-      RestartTimer( FSM.prototype.KeepAliveTimer );
+      RestartTimer( VARIABLES.KeepAliveTimer );
       Network.SendKeepAliveMessage();
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
-      RestartTimer( FSM.prototype.HoldTimer );
+      RestartTimer( VARIABLES.HoldTimer );
       Network.SendKeepAliveMessage();
     } );
 
@@ -250,7 +257,6 @@ function FSM()
 
     // Init FSM global variables / objects
     
-    exports.UniqueInstance = this;
   }
 }
 
