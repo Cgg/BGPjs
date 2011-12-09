@@ -99,7 +99,6 @@ function FSM()
 
     // IDLE
     Idle.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){
-      debugger;
       VARIABLES.ConnectTimer = setTimeout( ConnectRetryTimeOut,
                                            Conf.connectRetryTO );
 
@@ -336,8 +335,6 @@ RestartTimer = function( timerId )
     //timerId = setTimeout( callback, timeout );
 
     timerId._idleStart = new Date();
-
-    debugger;
   }
 };
 
@@ -349,9 +346,9 @@ exports.TestTimer = function()
     console.log( "plop" ); 
     console.timeEnd( "toto" );
     console.time( "toto" );
-    debugger;
   }, 5000 ); 
 
   setTimeout( RestartTimer, 4500, VARIABLES.ConnectTimer );
-}
+};
+
 exports.FSM = FSM;
