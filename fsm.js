@@ -348,16 +348,53 @@ FSM.prototype.ProcessMsg = function( msg )
 
 ProcessOpenMsg = function( msg )
 {
-  console.log( msg );
+  var open = {};
 
-  // TODO extract relevant information from message : peer AS number, hold
-  // time, peer BGP identifier. Also take care of opt parameters.
+  open.BGPVersion = msg.data.readUInt8( 0 );
+  open.peerAS     = msg.data.readUInt16BE( 1 );
+  open.holdTime   = msg.data.readUInt16BE( 3 );
+  open.peerBGP_Id = '';
+  
+  for( i = 0 ; i < 4 ; i++ )
+  {
+    open.peerBGP_Id = open.peerBGP_Id + msg.data.readUInt8( 5 + i ) + '.';
+  }
 
-  // set Hold timer value to the new time
-  UniqueInstance.holdTimerValue = msg.HoldValue;
+  open.peerBGP_Id.slice( msg.length - 1 ); // remove the last '.'
 
-  // TODO
-  // Ultimately spin back M_Open_Ok or M_Open_BAD
+  open.optParamLength = msg.data.readUInt8( 9 );
+
+  open.optPar = new Array( open.optParamLength );
+
+  for( i = 0 ; i < open.optParamLength ; i ++ )
+  {
+    // TODO process and store optional parameters
+  }
+
+  console.log( "received nice OPEN msg : " );
+  console.log( open );
+
+  var evt = new FSM_Event.FSM_Event( UniqueInstance.EVENTS_NAMES.M_Open_BAD );
+
+  // check for correctness
+  if( open.BGPVersion !== Conf.BGP_Version )
+  {
+    evt.error = 1;
+  }
+  else if( open.holdTime < 3 && open.holdTime !== 0 )
+  {
+    evt.error = 6;
+  }
+  // TODO + check if peer AS number and BGP id are valid...
+  else
+  {
+    evt.type = UniqueInstance.EVENTS_NAMES.M_Open_OK;
+
+    // set Hold timer value to the new time
+    UniqueInstance.holdTimerValue = msg.holdTimerValue * 1000;
+  }
+
+  UniqueInstance.Handle( evt );
 };
 
 ProcessUpdateMsg = function( msg )

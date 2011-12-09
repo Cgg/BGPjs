@@ -85,36 +85,10 @@ function ReadHeader()
 function ReadMessage()
 {
   // extract msg from incoming message
-  var message = incomingMessage.slice( HEADER_LENGHT, messageLength );
   var msg     = {};
 
-  console.log( message );
-
-  // determine message type and extract info into msg accordingly
-  // TODO
-
   msg.type = messageType;
-
-  msg.BGPVersion = message.readUInt8( 0 );
-  msg.peerAS     = message.readUInt16BE( 1 );
-  msg.holdTime   = message.readUInt16BE( 3 );
-  msg.peerBGP_Id = '';
-  
-  for( i = 0 ; i < 4 ; i++ )
-  {
-    msg.peerBGP_Id = msg.peerBGP_Id + message.readUInt8( 5 + i ) + '.';
-  }
-
-  msg.peerBGP_Id.slice( msg.length - 1 ); // remove the last '.'
-
-  var optParamLength = message.readUInt8( 9 );
-
-  msg.optPar = new Array( optParamLength );
-
-  for( i = 0 ; i < optParamLength ; i ++ )
-  {
-    // TODO process and store optional parameters
-  }
+  msg.data = incomingMessage.slice( HEADER_LENGHT, messageLength );
 
   // finally, call the callback
 
@@ -122,6 +96,7 @@ function ReadMessage()
 
   // Finally, reset the headerRead property
   headerRead = false;
+  endOfIncomingMessage = 0;
 }
 
 function WriteHeader( msgType, msg )
@@ -306,14 +281,14 @@ function TestWriteMsg()
   var local_address = ( Conf.thisHost !== 'localhost' ? Conf.thisHost : '127.0.0.1' );
   var pieces = local_address.split( '.' );
 
-  debugger;
-
   for( i = 0 ; i < 4 ; i++ )
   {
     msg.writeUInt8( parseInt( pieces[ i ], 10 ), 24 + i );
   }
 
   msg.writeUInt8( 0, 28 ); // number of optional parameters
+
+  console.log( msg );
 }
 
 exports.StartSocket             = StartSocket;
