@@ -200,7 +200,7 @@ function FSM()
 
     OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
       VARIABLES.KeepAliveTimer = setTimeout( KeepAliveTimeOut, Conf.keepAliveTO );
-      SendKeepAliveMessage();
+      Network.SendKeepAliveMessage();
     } );
 
     OpenConfirm.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
