@@ -284,42 +284,74 @@ FSM.prototype.Stop = function()
   this.Handle( new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Stop ) );
 };
 
-FSM.prototype.ConnectRetryTimeOut = function()
+ConnectRetryTimeOut = function()
 {
-  exports.UniqueInstance.Handle( 
+  UniqueInstance.Handle( 
     new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_ConnectRetry ) );
+};
+
+HoldTimeOut = function()
+{
+  UniqueInstance.Handle(
+    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_Hold ) );
+};
+
+KeepAliveTimeOut = function()
+{
+  UniqueInstance.Handle(
+    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_KeepAlive ) );
+};
+
+ProcessOpenMsg = function( msg )
+{
+  console.log( msg );
+
+  // TODO extract relevant information from message : peer AS number, hold
+  // time, peer BGP identifier. Also take care of opt parameters.
+
+  // set Hold timer value to the new time
+  UniqueInstance.holdTimerValue = msg.HoldValue;
+
+  // TODO
+  // Ultimately spin back M_Open_Ok or M_Open_BAD
 };
 
 ProcessUpdateMsg = function( msg )
 {
   console.log( msg );
 
-  // TODO ?
+  // TODO
+  // Ultimately spin back M_Update_OK or M_Update_BAD
 };
 
 RestartTimer = function( timerId )
 {
   if( timerId !== null )
   {
-    var timeout  = timerId._idleTimeout;
-    var callback = timerId._onTimeout;
+    //var timeout  = timerId._idleTimeout;
+    //var callback = timerId._onTimeout;
 
-    clearTimeout( timerId );
+    //clearTimeout( timerId );
 
-    FSM.prototype.ConnectTimer = setTimeout( callback, timeout );
+    //timerId = setTimeout( callback, timeout );
+
+    timerId._idleStart = new Date();
+
+    debugger;
   }
 };
 
-FSM.prototype.HoldTimeOut = function()
+exports.TestTimer = function()
 {
-  FSM.UniqueInstance.Handle(
-    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_Hold ) );
-};
+  console.time( "toto" );
 
-FSM.prototype.KeepAliveTimeOut = function()
-{
-  FSM.prototype.UniqueInstance.Handle(
-    new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_KeepAlive ) );
-};
+  VARIABLES.ConnectTimer = setTimeout( function(){
+    console.log( "plop" ); 
+    console.timeEnd( "toto" );
+    console.time( "toto" );
+    debugger;
+  }, 5000 ); 
 
+  setTimeout( RestartTimer, 4500, VARIABLES.ConnectTimer );
+}
 exports.FSM = FSM;
