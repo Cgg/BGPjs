@@ -184,18 +184,18 @@ function FSM()
 
     OpenSent.Connect( Idle, this.EVENTS_NAMES.M_Open_BAD, function( evt ){
       SendNotificationMessage( FSM.prototype.ERRCODES.OPEN_ERR, evt.error );
-      // release resources
+      ReleaseResources();
     } );
 
     // OPEN CONFIRM
     OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
 
     OpenConfirm.Connect( Idle, this.EVENTS_NAMES.BGP_TC_Closed, function( evt ){
-      // release resources
+      ReleaseResources();
     } );
 
     OpenConfirm.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
-      // release resources
+      ReleaseResources();
     } );
 
     OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
@@ -210,18 +210,18 @@ function FSM()
 
     OpenConfirm.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
       CloseConnection();
-      // release resource
+      ReleaseResources();
     } );
 
     // ESTABLISHED
     Established.Connect( Established, this.EVENTS_NAMES.BGP_Start, function( evt ){} );
 
     Established.Connect( Idle, this.EVENTS_NAMES.BGP_TC_Closed, function( evt ){
-      // release resources
+      ReleaseResources();
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
-      // release resources
+      ReleaseResources();
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
@@ -244,7 +244,7 @@ function FSM()
 
       CloseConnection();
 
-      // release resources
+      ReleaseResources();
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
@@ -252,7 +252,7 @@ function FSM()
 
       CloseConnection();
 
-      // release resources
+      ReleaseResources();
     } );
 
     // init current state variable
@@ -352,6 +352,16 @@ CloseConnection = function()
 {
   Network.StopSocket();
   Network.StopServer();
+};
+
+ReleaseResources = function()
+{
+  // Stop timers
+  clearTimeout( VARIABLES.ConnectTimer );
+  clearTimeout( VARIABLES.HoldTimer );
+  clearTimeout( VARIABLES.KeepAliveTimer );
+
+  // what else ?
 };
 
 exports.TestTimer = function()
