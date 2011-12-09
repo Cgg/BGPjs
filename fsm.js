@@ -98,9 +98,20 @@ function FSM()
     // TODO : default behavior (consisting of returning to Idle and releasing
     // everything + send NOTIFICATION for OpenSent/Confirm and Established
     // states)
+    
+    DefaultBehavior = function()
+    {
+      var _Idle = Idle;
+
+      CloseConnection();
+      ReleaseResources();
+
+      return _Idle;
+    };
 
     // IDLE
     Idle.Connect( Connect, this.EVENTS_NAMES.BGP_Start, function( evt ){
+
       VARIABLES.ConnectTimer = setTimeout( ConnectRetryTimeOut,
                                            Conf.connectRetryTO );
 
