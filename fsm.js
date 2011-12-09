@@ -149,7 +149,7 @@ function FSM()
     } );
 
     Active.Connect( Connect, this.EVENTS_NAMES.TO_ConnectRetry, function( evt ){
-      RestartTimer( VARIABLES.ConnectTimer );
+      VARIABLES.ConnectTimer = setTimeout( ConnectRetryTimeOut, Conf.connectRetryTO );
 
       Network.StopSocket();
       Network.StartSocket();
@@ -171,12 +171,12 @@ function FSM()
 
     OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open_OK, function( evt ){
       VARIABLES.KeepAliveTimer = setTimeout( KeepAliveTimeOut,
-                                              Conf.keepAliveTO );
+                                             Conf.keepAliveTO );
 
       // restart Hold Timer with its new timeout value
       clearTimeout( VARIABLES.HoldTimer );
       VARIABLES.HoldTimer = setTimeout( HoldTimeOut,
-                                            FSM.prototype.holdTimerValue );
+                                        FSM.prototype.holdTimerValue );
 
       Network.SendKeepAliveMessage();
     } );
@@ -198,7 +198,7 @@ function FSM()
     } );
 
     OpenConfirm.Connect( OpenConfirm, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
-      RestartTimer( VARIABLES.KeepAliveTimer );
+      VARIABLES.KeepAliveTimer = setTimeout( KeepAliveTimeOut, Conf.keepAliveTO );
       SendKeepAliveMessage();
     } );
 
@@ -224,7 +224,7 @@ function FSM()
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.TO_KeepAlive, function( evt ){
-      RestartTimer( VARIABLES.KeepAliveTimer );
+      VARIABLES.KeepAliveTimer = setTimeout( KeepAliveTimeOut, Conf.keepAliveTO );
       Network.SendKeepAliveMessage();
     } );
 
@@ -325,6 +325,8 @@ ProcessUpdateMsg = function( msg )
   // Ultimately spin back M_Update_OK or M_Update_BAD
 };
 
+// This function reset a timer currently running. It wont do anything if the
+// timer has already expired.
 RestartTimer = function( timerId )
 {
   if( timerId !== null )
