@@ -165,8 +165,7 @@ function FSM()
     } );
 
     OpenSent.Connect( Idle, this.EVENTS_NAMES.BGP_TransportFatalError, function( evt ){
-      Network.StopSocket();
-      Network.StopServer();
+      CloseConnection();
     } );
 
     OpenSent.Connect( OpenConfirm, this.EVENTS_NAMES.M_Open_OK, function( evt ){
@@ -208,7 +207,7 @@ function FSM()
     } );
 
     OpenConfirm.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
-      // close connection
+      CloseConnection();
       // release resource
     } );
 
@@ -234,19 +233,23 @@ function FSM()
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.M_Update_OK, function( evt ){
-      ProcessUpdateMsg( evt.msg );
+      //
       SendUpdateMessage();
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Update_BAD, function( evt ){
       SendNotificationMessage( FSM.prototype.ERRCODES.UPDATE_ERR, evt.error );
-      // close connection
+
+      CloseConnection();
+
       // release resources
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
       SendNotificationMessage( FSM.prototype.ERRCODES.CEASE, 0 );
-      // close transport connection
+
+      CloseConnection();
+
       // release resources
     } );
 
@@ -340,6 +343,13 @@ RestartTimer = function( timerId )
 
     timerId._idleStart = new Date();
   }
+};
+
+// Close the transport connection to the peer
+CloseConnection = function()
+{
+  Network.StopSocket();
+  Network.StopServer();
 };
 
 exports.TestTimer = function()
