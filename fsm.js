@@ -114,7 +114,8 @@ function FSM()
     Connect.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
       clearTimeout( VARIABLES.ConnectTimer );
 
-      // TODO Complete initialization -> ?? set hold
+      // TODO Complete initialization -> ??
+      VARIABLES.HoldTimer = setTimeout( HoldTimeOut, UniqueInstance.holdTimerValue );
 
       Network.SendOpenMessage();
     } );
@@ -136,7 +137,8 @@ function FSM()
     Active.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
       clearTimeout( VARIABLES.ConnectTimer );
 
-      // TODO Complete initialization -> ?? set hold
+      // TODO Complete initialization -> ?? 
+      VARIABLES.HoldTimer = setTimeout( HoldTimeOut, UniqueInstance.holdTimerValue );
 
       Network.SendOpenMessage();
     } );
@@ -175,7 +177,7 @@ function FSM()
       // restart Hold Timer with its new timeout value
       clearTimeout( VARIABLES.HoldTimer );
       VARIABLES.HoldTimer = setTimeout( HoldTimeOut,
-                                        FSM.prototype.holdTimerValue );
+                                        UniqueInstance.holdTimerValue );
 
       Network.SendKeepAliveMessage();
     } );
