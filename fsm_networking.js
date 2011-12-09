@@ -45,7 +45,6 @@ function sockHandle( socket )
   } );
 
   socket.addListener( 'data', function( data ){
-    debugger;
     console.log( "Incoming data" );
 
     console.log( data );
