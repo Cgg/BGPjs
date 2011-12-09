@@ -258,6 +258,32 @@ function StopServer()
   }
 }
 
+function TestWriteMsg()
+{
+  // tries to write an OPEN message (w/o actually sending it)
+  var msg = Buffer( 29 );
+
+  // format message...
+  WriteHeader( 42, msg );
+
+  msg.writeUInt8( Conf.BGP_Version, 19 ); // BGP version
+  msg.writeUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
+  msg.writeUInt16BE( 20000, 22 );  // HoldTime, Big Endian
+
+  // write the bgp identifier
+  var local_address = ( Conf.thisHost !== 'localhost' ? Conf.thisHost : '127.0.0.1' );
+  var pieces = local_address.split( '.' );
+
+  debugger;
+
+  for( i = 0 ; i < 4 ; i++ )
+  {
+    msg.writeUInt8( parseInt( pieces[ i ], 10 ), 24 + i );
+  }
+
+  msg.writeUInt8( 0, 28 ); // number of optional parameters
+}
+
 exports.StartSocket             = StartSocket;
 exports.StartServer             = StartServer;
 exports.StopSocket              = StopSocket;
@@ -266,3 +292,5 @@ exports.SendOpenMessage         = SendOpenMessage;
 exports.SendUpdateMessage       = SendUpdateMessage;
 exports.SendKeepAliveMessage    = SendKeepAliveMessage;
 exports.SendNotificationMessage = SendNotificationMessage;
+
+exports.TestWriteMsg = TestWriteMsg;
