@@ -116,15 +116,15 @@ function SendOpenMessage( /* message parameters ? */ )
 
   msg.writeUInt8( Conf.BGP_Version, 19 ); // BGP version
   msg.writeUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
-  msg.writeUInt16BE( FSM.UniqueInstance.HoldTime, 22 );  // HoldTime, Big Endian
+  msg.writeUInt16BE( Math.round( FSM.UniqueInstance.holdTimerValue / 1000 ), 22 );  // HoldTime, Big Endian
 
   // write the bgp identifier
-  var local_address = ( Conf.listenHost !== 'localhost' ? Conf.listenHost : '127.0.0.1' );
+  var local_address = ( Conf.thisHost !== 'localhost' ? Conf.thisHost : '127.0.0.1' );
   var pieces = local_address.split( '.' );
 
   for( i = 0 ; i < 4 ; i++ )
   {
-    msg.writeUInt8( parseInt( pieces[ i ], 2 ), 24 + i );
+    msg.writeUInt8( parseInt( pieces[ i ], 10 ), 24 + i );
   }
 
   msg.writeUInt8( 0, 28 ); // number of optional parameters
