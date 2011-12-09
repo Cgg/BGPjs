@@ -212,7 +212,8 @@ function StartSocket( port, host )
   tempSocket = new net.Socket( { fd : null, type : 'tcp4', allowHalfOpen : false } );
 
   tempSocket.on( 'connect', function(){
-    debugger;
+
+    console.log( "socket managed to connected on " + Conf.peerHost );
 
     // stop the server that's listening for a connection from the peer
     fsmServer.close();
@@ -228,7 +229,6 @@ function StartSocket( port, host )
   tempSocket.on( 'error', function( e ){
     if( e.code === 'ECONNREFUSED' )
     {
-      debugger;
       FSM.UniqueInstance.Handle(
         new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_OpenFailed ) );
     }
@@ -259,8 +259,8 @@ function StopSocket()
 function StartServer( port, host )
 {
   fsmServer = net.createServer( function( sock ){
-    debugger;
 
+    console.log( "Server got incoming connection on " + sock.remoteAddress );
     // stop the socket that's trying to establish a connection
     tempSocket = null;
 
