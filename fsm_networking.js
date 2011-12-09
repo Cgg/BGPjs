@@ -45,10 +45,16 @@ function sockHandle( socket )
   } );
 
   socket.addListener( 'data', function( data ){
-    // read header
+    debugger;
+    console.log( "Incoming data" );
+
+    console.log( data );
+
     data.copy( incomingMessage, endOfIncomingMessage );
 
-    endOfIncomingMessage = endOfIncomingMessage + socket.bytesRead;
+    endOfIncomingMessage = endOfIncomingMessage + data.length;
+
+    console.log( "received " + data.length + " bytes of data" );
 
     if( !headerRead  && endOfIncomingMessage >= HEADER_LENGHT )
     {
@@ -59,37 +65,63 @@ function sockHandle( socket )
     {
       ReadMessage();
     }
-
-    socket.bytesReads = 0;
   } );
 }
 
 // read and consume the bgp header from incoming message
 function ReadHeader()
 {
+  // extract header from incoming message
   var header = incomingMessage.slice( 0, HEADER_LENGHT );
 
-  // TODO
+  messageLength = header.readUInt16BE( 16 );
+  messageType   = header.readUInt8( 18 );
+
+  console.log( "Read header for incoming message of length " + messageLength + " and type " + messageType );
 
   headerRead = true;
 }
 
 function ReadMessage()
 {
-  var message = incomingMessage.slice( 0, messageLength );
+  // extract msg from incoming message
+  var message = incomingMessage.slice( HEADER_LENGHT, messageLength );
   var msg     = {};
+
+  console.log( message );
 
   // determine message type and extract info into msg accordingly
   // TODO
 
-  headerRead = false;
+  msg.type = messageType;
+
+  msg.BGPVersion = message.readUInt8( 0 );
+  msg.peerAS     = message.readUInt16BE( 1 );
+  msg.holdTime   = message.readUInt16BE( 3 );
+  msg.peerBGP_Id = '';
+  
+  for( i = 0 ; i < 4 ; i++ )
+  {
+    msg.peerBGP_Id = msg.peerBGP_Id + message.readUInt8( 5 + i ) + '.';
+  }
+
+  msg.peerBGP_Id.slice( msg.length - 1 ); // remove the last '.'
+
+  var optParamLength = message.readUInt8( 9 );
+
+  msg.optPar = new Array( optParamLength );
+
+  for( i = 0 ; i < optParamLength ; i ++ )
+  {
+    // TODO process and store optional parameters
+  }
 
   // finally, call the callback
-  var evt = new FSM_Event.FSM_Event( /* event type */ );
 
-  evt.msg = msg;
+  FSM.UniqueInstance.ProcessMsg( msg );
 
-  FSM.UniqueInstance.Handle( evt );
+  // Finally, reset the headerRead property
+  headerRead = false;
 }
 
 function WriteHeader( msgType, msg )

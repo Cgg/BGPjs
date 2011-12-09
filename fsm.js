@@ -311,6 +311,30 @@ KeepAliveTimeOut = function()
     new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.TO_KeepAlive ) );
 };
 
+FSM.prototype.ProcessMsg = function( msg )
+{
+  switch( msg.type )
+  {
+    case this.MESSAGE_TYPES.OPEN :
+      ProcessOpenMsg( msg );
+      break;
+
+    case this.MESSAGE_TYPES.UPDATE :
+      ProcessUpdateMsg( msg );
+      break;
+
+    case this.MESSAGE_TYPES.KEEPALIVE :
+      this.Handle(
+        new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.M_KeepAlive ) );
+      break;
+
+    case this.MESSAGE_TYPES.NOTIFICATION :
+      this.Handle(
+        new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.M_Notification ) );
+      break;
+  }
+};
+
 ProcessOpenMsg = function( msg )
 {
   console.log( msg );
