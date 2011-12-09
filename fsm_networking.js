@@ -97,14 +97,14 @@ function WriteHeader( msgType, msg )
   // marker is set to ones
   for( i = 0 ; i < 16 ; i++ )
   {
-    b[ i ] = 255;
+    msg[ i ] = 255;
   }
 
   // length
-  b.writeUInt16BE( b.length, 16 );
+  msg.writeUInt16BE( msg.length, 16 );
 
   // message type
-  b.writeUInt8( msgType, 18 );
+  msg.writeUInt8( msgType, 18 );
 }
 
 function SendOpenMessage( /* message parameters ? */ )
@@ -114,9 +114,9 @@ function SendOpenMessage( /* message parameters ? */ )
   // format message...
   WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.OPEN, msg );
 
-  msg.WriteUInt8( Conf.BGP_Version, 19 ); // BGP version
-  msg.WriteUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
-  msg.WriteUInt16BE( fsmCallbackPtr.HoldTime, 22 );  // HoldTime, Big Endian
+  msg.writeUInt8( Conf.BGP_Version, 19 ); // BGP version
+  msg.writeUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
+  msg.writeUInt16BE( FSM.UniqueInstance.HoldTime, 22 );  // HoldTime, Big Endian
 
   // write the bgp identifier
   var local_address = ( Conf.listenHost !== 'localhost' ? Conf.listenHost : '127.0.0.1' );
@@ -124,10 +124,10 @@ function SendOpenMessage( /* message parameters ? */ )
 
   for( i = 0 ; i < 4 ; i++ )
   {
-    msg.WriteUInt8( parseInt( pieces[ i ], 2 ), 24 + i );
+    msg.writeUInt8( parseInt( pieces[ i ], 2 ), 24 + i );
   }
 
-  msg.WriteUInt8( 0, 28 ); // number of optional parameters
+  msg.writeUInt8( 0, 28 ); // number of optional parameters
 
   // and bang !
   fsmSocket.write( msg );
@@ -140,8 +140,8 @@ function SendUpdateMessage( /* Update parameters ... */ )
   WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.UPDATE, msg );
 
   // set both withdrawn route and total path attribute lenght to 0
-  msg.WriteUInt16BE( 0, 19 );
-  msg.WriteUInt16BE( 0, 21 );
+  msg.writeUInt16BE( 0, 19 );
+  msg.writeUInt16BE( 0, 21 );
 
   fsmSocket.write( msg );
 }
@@ -164,8 +164,8 @@ function SendNotificationMessage( errCode, errSubcode )
   // format message...
   WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.NOTIFICATION, msg );
 
-  msg.WriteUInt8( errCode, 19 );
-  msg.WriteUInt8( errSubcode, 20 );
+  msg.writeUInt8( errCode, 19 );
+  msg.writeUInt8( errSubcode, 20 );
 
   // and bang !
   fsmSocket.write( msg );
