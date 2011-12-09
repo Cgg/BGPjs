@@ -104,8 +104,8 @@ function FSM()
       VARIABLES.ConnectTimer = setTimeout( ConnectRetryTimeOut,
                                            Conf.connectRetryTO );
 
-      Network.StartSocket( Conf.port, Conf.host, UniqueInstance );
-      Network.StartServer( Conf.port, Conf.listenHost, UniqueInstance );
+      Network.StartSocket( Conf.port, Conf.peerHost, UniqueInstance );
+      Network.StartServer( Conf.port, Conf.thisHost, UniqueInstance );
     } );
 
     // CONNECT
@@ -275,8 +275,11 @@ FSM.prototype.Handle = function( evt )
 };
 
 /* Start the fsm */
-FSM.prototype.Start = function()
+FSM.prototype.Start = function( thisHost, peerHost )
 {
+  Conf.thisHost = thisHost;
+  Conf.peerHost = peerHost;
+
   console.log( "Starting FSM." );
 
   var evt = new FSM_Event.FSM_Event( this.EVENTS_NAMES.BGP_Start);
