@@ -51,6 +51,16 @@ FSM.prototype.MESSAGE_TYPES =
   KEEPALIVE    : 4
 };
 
+FSM.prototype.ERRCODES =
+{
+  HEADER_ERR : 1,
+  OPEN_ERR   : 2,
+  UPDATE_ERR : 3,
+  HOLD_TO    : 4,
+  FSM_ERR    : 5,
+  CEASE      : 6
+};
+
 /* FSM's global variables (accessible by the states) */
 FSM.prototype.VARIABLES =
 {
@@ -164,8 +174,8 @@ function FSM()
     } );
 
     OpenSent.Connect( Idle, this.EVENTS_NAMES.M_Open_BAD, function( evt ){
+      SendNotificationMessage( FSM.prototype.ERRCODES.OPEN_ERR, evt.error );
       // release resources
-      // send NOTIFICATION
     } );
 
     // OPEN CONFIRM
@@ -221,13 +231,15 @@ function FSM()
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Update_BAD, function( evt ){
-      // send NOTIFICATION
+      SendNotificationMessage( FSM.prototype.ERRCODES.UPDATE_ERR, evt.error );
+      // close connection
+      // release resources
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
+      SendNotificationMessage( FSM.prototype.ERRCODES.CEASE, 0 );
       // close transport connection
       // release resources
-      // send NOTIFICATION
     } );
 
     // init current state variable
