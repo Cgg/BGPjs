@@ -14,12 +14,12 @@ var Conf      = require( './conf' );
 headerRead    = false;
 messageLength = 0;
 messageType   = undefined;
-fsmCallbackPtr = FSM.UniqueInstance;
 
-fsmSocket = null;
+tempSocket = null;
 
 fsmServer = null; 
-fsmSocketServer = null;
+
+fsmSocket = null;
 
 incomingMessage = new Buffer( 4096 );
 incomingMessage.fill( 0 );
@@ -30,18 +30,18 @@ HEADER_LENGHT = 19; // bgp header length in bytes
 function sockHandle( socket )
 {
   socket.addListener( 'connect', function(){
-    fsmCallbackPtr.Handle( new FSM_Event.FSM_Event( fsmCallbackPtr.EVENTS_NAMES.BGP_TC_Open ) );
+    FSM.UniqueInstance.Handle( new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_Open ) );
   } );
 
   socket.addListener( 'error', function( e ){
     if( e.errno == 'ECONNREFUSED' ) // Connection refused
     {
-      fsmCallbackPtr.Handle( new FSM_Event.FSM_Event( fsmCallbackPtr.EVENTS_NAMES.BGP_TC_OpenFailed ) );
+      FSM.UniqueInstance.Handle( new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_OpenFailed ) );
     }
   } );
 
   socket.addListener( 'close', function(){
-    fsmCallbackPtr.Handle( new FSM_Event.FSM_Event( fsmCallbackPtr.EVENTS_NAMES.BGP_TC_Closed ) );
+    FSM.UniqueInstance.Handle( new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_Closed ) );
   } );
 
   socket.addListener( 'data', function( data ){
@@ -62,29 +62,6 @@ function sockHandle( socket )
 
     socket.bytesReads = 0;
   } );
-}
-
-function StartSocket( port, host )
-{
-  console.log( "starting socket" );
-  fsmCallbackPtr = FSM.UniqueInstance;
-
-  fsmSocket = new net.Socket( { fd : null, type : 'tcp4', allowHalfOpen : false } );
-
-  sockHandle( fsmSocket );
-
-  fsmSocket.connect( port, host );
-}
-
-function StopSocket()
-{
-  console.log( "stopping socket" );
-
-  if( fsmSocket !== null )
-  {
-    fsmSocket.destroy();
-    fsmSocket = null;
-  }
 }
 
 // read and consume the bgp header from incoming message
@@ -112,7 +89,7 @@ function ReadMessage()
 
   evt.msg = msg;
 
-  fsmCallbackPtr.Handle( evt );
+  FSM.UniqueInstance.Handle( evt );
 }
 
 function WriteHeader( msgType, msg )
@@ -194,13 +171,73 @@ function SendNotificationMessage( errCode, errSubcode )
   fsmSocket.write( msg );
 }
 
+/* Socket */
+
+function StartSocket( port, host )
+{
+  console.log( "starting socket" );
+
+  tempSocket = new net.Socket( { fd : null, type : 'tcp4', allowHalfOpen : false } );
+
+  tempSocket.on( 'connect', function(){
+    debugger;
+
+    // stop the server that's listening for a connection from the peer
+    fsmServer.close();
+    fsmServer = null;
+
+    fsmSocket = tempSocket;
+    sockHandle( fsmSocket );
+
+    FSM.UniqueInstance.Handle(
+      new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_Open ) );
+  } );
+
+  tempSocket.on( 'error', function( e ){
+    if( e.code === 'ECONNREFUSED' )
+    {
+      debugger;
+      FSM.UniqueInstance.Handle(
+        new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_OpenFailed ) );
+    }
+  } );
+
+  tempSocket.connect( port, host );
+}
+
+function StopSocket()
+{
+  console.log( "stopping socket" );
+
+  if( tempSocket !== null )
+  {
+    tempSocket.destroy();
+    tempSocket = null;
+  }
+
+  if( fsmSocket !== null )
+  {
+    fsmSocket.destroy();
+    fsmSocket = null;
+  }
+}
+
 /* FSM_Server */
 
 function StartServer( port, host )
 {
   fsmServer = net.createServer( function( sock ){
-    fsmSocketServer = sock;
+    debugger;
+
+    // stop the socket that's trying to establish a connection
+    tempSocket = null;
+
+    fsmSocket = sock;
+
     sockHandle( sock );
+
+    FSM.UniqueInstance.Handle( 
+      new FSM_Event.FSM_Event( FSM.UniqueInstance.EVENTS_NAMES.BGP_TC_Open ) );
   } );
 
   fsmServer.listen( port, host );
@@ -208,10 +245,10 @@ function StartServer( port, host )
 
 function StopServer()
 {
-  if( fsmSocketServer !== null )
+  if( fsmSocket !== null )
   {
-    fsmSocketServer.destroy();
-    fsmSocketServer = null;
+    fsmSocket.destroy();
+    fsmSocket = null;
   }
 
   if( fsmServer !== null )
