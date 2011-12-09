@@ -242,7 +242,6 @@ function FSM()
 
     Established.Connect( Established, this.EVENTS_NAMES.M_KeepAlive, function( evt ){
       RestartTimer( VARIABLES.HoldTimer );
-      Network.SendKeepAliveMessage();
     } );
 
     Established.Connect( Established, this.EVENTS_NAMES.M_Update_OK, function( evt ){
