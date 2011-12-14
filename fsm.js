@@ -70,11 +70,11 @@ VARIABLES =
 {
   ConnectTimer       : null,
   HoldTimer          : null,
-  KeepAliveTimer     : null,
-  ConnectionToPeer   : "todo",
-  ConnectionFromPeer : "todo"
+  KeepAliveTimer     : null
 };
 
+FSM.prototype.AS_Number      =  65000;
+FSM.prototype.BGP_Version    = 4;
 FSM.prototype.holdTimerValue = 4 * 60000;
 
 /* Functions' definitions */
@@ -98,7 +98,7 @@ function FSM()
     // TODO : default behavior (consisting of returning to Idle and releasing
     // everything + send NOTIFICATION for OpenSent/Confirm and Established
     // states)
-    
+
     DefaultBehavior = function()
     {
       var _Idle = Idle;
@@ -125,7 +125,6 @@ function FSM()
     Connect.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
       clearTimeout( VARIABLES.ConnectTimer );
 
-      // TODO Complete initialization -> ??
       VARIABLES.HoldTimer = setTimeout( HoldTimeOut, UniqueInstance.holdTimerValue );
 
       Network.SendOpenMessage();
@@ -148,7 +147,6 @@ function FSM()
     Active.Connect( OpenSent, this.EVENTS_NAMES.BGP_TC_Open, function( evt ){
       clearTimeout( VARIABLES.ConnectTimer );
 
-      // TODO Complete initialization -> ?? 
       VARIABLES.HoldTimer = setTimeout( HoldTimeOut, UniqueInstance.holdTimerValue );
 
       Network.SendOpenMessage();
@@ -194,7 +192,7 @@ function FSM()
     } );
 
     OpenSent.Connect( Idle, this.EVENTS_NAMES.M_Open_BAD, function( evt ){
-      SendNotificationMessage( FSM.prototype.ERRCODES.OPEN_ERR, evt.error );
+      Network.SendNotificationMessage( FSM.prototype.ERRCODES.OPEN_ERR, evt.error );
       ReleaseResources();
     } );
 
@@ -246,11 +244,11 @@ function FSM()
 
     Established.Connect( Established, this.EVENTS_NAMES.M_Update_OK, function( evt ){
       //
-      SendUpdateMessage();
+      Networtk.SendUpdateMessage();
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Update_BAD, function( evt ){
-      SendNotificationMessage( FSM.prototype.ERRCODES.UPDATE_ERR, evt.error );
+      Network.SendNotificationMessage( FSM.prototype.ERRCODES.UPDATE_ERR, evt.error );
 
       CloseConnection();
 
@@ -258,7 +256,7 @@ function FSM()
     } );
 
     Established.Connect( Idle, this.EVENTS_NAMES.M_Notification, function( evt ){
-      SendNotificationMessage( FSM.prototype.ERRCODES.CEASE, 0 );
+      Network.SendNotificationMessage( FSM.prototype.ERRCODES.CEASE, 0 );
 
       CloseConnection();
 
@@ -272,7 +270,7 @@ function FSM()
     // state keeps references on some other states.
 
     // Init FSM global variables / objects
-    
+
   }
 }
 
@@ -285,10 +283,14 @@ FSM.prototype.Handle = function( evt )
 };
 
 /* Start the fsm */
-FSM.prototype.Start = function( thisHost, peerHost )
+FSM.prototype.Start = function( thisHost, peerHost, bgpVersion, asNumber )
 {
   Conf.thisHost = thisHost;
   Conf.peerHost = peerHost;
+
+  FSM.prototype.BGP_Version = bgpVersion;
+
+  FSM.prototype.AS_Number = asNumber;
 
   console.log( "Starting FSM." );
 
@@ -339,6 +341,7 @@ FSM.prototype.ProcessMsg = function( msg )
       break;
 
     case this.MESSAGE_TYPES.NOTIFICATION :
+      ProcessNotificationMsg( msg );
       this.Handle(
         new FSM_Event.FSM_Event( FSM.prototype.EVENTS_NAMES.M_Notification ) );
       break;
@@ -353,7 +356,7 @@ ProcessOpenMsg = function( msg )
   open.peerAS     = msg.data.readUInt16BE( 1 );
   open.holdTime   = msg.data.readUInt16BE( 3 );
   open.peerBGP_Id = '';
-  
+
   for( i = 0 ; i < 4 ; i++ )
   {
     open.peerBGP_Id = open.peerBGP_Id + msg.data.readUInt8( 5 + i ) + '.';
@@ -367,7 +370,7 @@ ProcessOpenMsg = function( msg )
 
   for( i = 0 ; i < open.optParamLength ; i ++ )
   {
-    // TODO process and store optional parameters
+    // process and store optional parameters
   }
 
   console.log( "received nice OPEN msg : " );
@@ -376,7 +379,7 @@ ProcessOpenMsg = function( msg )
   var evt = new FSM_Event.FSM_Event( UniqueInstance.EVENTS_NAMES.M_Open_BAD );
 
   // check for correctness
-  if( open.BGPVersion !== Conf.BGP_Version )
+  if( open.BGPVersion !== UniqueInstance.BGP_Version )
   {
     evt.error = 1;
   }
@@ -384,7 +387,7 @@ ProcessOpenMsg = function( msg )
   {
     evt.error = 6;
   }
-  // TODO + check if peer AS number and BGP id are valid...
+  // + check if peer AS number and BGP id are valid...
   else
   {
     evt.type = UniqueInstance.EVENTS_NAMES.M_Open_OK;
@@ -400,8 +403,76 @@ ProcessUpdateMsg = function( msg )
 {
   console.log( msg );
 
-  // TODO
-  // Ultimately spin back M_Update_OK or M_Update_BAD
+  var evt = new FSM_Event.FSM_Event( UniqueInstance.EVENTS_NAMES.M_Update_BAD );
+
+  var withdrawnRouteLength = msg.readUInt16BE( 0 );
+  var totalPathAttriLenght = msg.readUInt16BE( 2 + withdrawnRouteLength );
+
+  if( withdrawnRouteLength + totalPathAttriLenght + 4 !== msg.length )
+  {
+    evt.error = 1; // malformed attributes list
+  }
+  else
+  {
+    evt.type = UniqueInstance.EVENTS_NAMES.M_Update_OK;
+  }
+
+  UniqueInstance.Handle( evt );
+};
+
+ProcessNotificationMsg = function( msg )
+{
+  console.log( msg );
+
+  var errCode    = msg.data.readUInt8( 0 );
+  var errSubCode = msg.data.readUInt8( 1 );
+
+  console.log( "Received notification code" );
+
+  switch( errCode )
+  {
+    case UniqueInstance.ERRCODES.HEADER_ERR:
+      console.log( "Header error" );
+      console.log( "Error subcode : ");
+
+      switch( errSubCode )
+      {
+        case 1: console.log( "Connection not synchronized" ); break;
+        case 2: console.log( "Bad message length" ); break;
+        case 3: console.log( "Bad message type" ); break;
+      }
+      break;
+
+    case UniqueInstance.ERRCODES.OPEN_ERR:
+      console.log( "Open error" );
+      console.log( "Error subcode : " );
+
+      switch( errSubCode )
+      {
+        case 1: console.log( "Unsupported version number" ); break;
+        case 2: console.log( "Bad peer AS" ); break;
+        case 3: console.log( "Bad bgp id" ); break;
+        case 4: console.log( "Unsupported opt parameter" ); break;
+        case 5: console.log( "Auth failure" ); break;
+        case 6: console.log( "Unacceptable Hold time" ); break;
+      }
+      break;
+
+    case UniqueInstance.ERRCODES.UPDATE_ERR:
+      console.log( "Update error" );
+      console.log( "Error subcode" + errSubCode );
+      break;
+
+    case UniqueInstance.ERRCODES.HOLD_TO:
+      console.log( "Hold timeout" );
+      break;
+    case UniqueInstance.ERRCODES.FSM_ERR:
+      console.log( "FSM error" );
+      break;
+    case UniqueInstance.ERRCODES.CEASE:
+      console.log( "Cease" );
+      break;
+  }
 };
 
 // This function reset a timer currently running. It wont do anything if the
@@ -435,7 +506,7 @@ ReleaseResources = function()
   clearTimeout( VARIABLES.HoldTimer );
   clearTimeout( VARIABLES.KeepAliveTimer );
 
-  // what else ?
+  CloseConnection();
 };
 
 exports.TestTimer = function()
@@ -446,9 +517,9 @@ exports.TestTimer = function()
     console.log( "plop" ); 
     console.timeEnd( "toto" );
     console.time( "toto" );
-  }, 5000 ); 
+  }, 5000 );
 
   setTimeout( RestartTimer, 4500, VARIABLES.ConnectTimer );
 };
 
-exports.FSM = FSM;
+exports.FSM       = FSM;

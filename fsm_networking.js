@@ -47,8 +47,6 @@ function sockHandle( socket )
   socket.addListener( 'data', function( data ){
     console.log( "Incoming data" );
 
-    console.log( data );
-
     data.copy( incomingMessage, endOfIncomingMessage );
 
     endOfIncomingMessage = endOfIncomingMessage + data.length;
@@ -73,8 +71,26 @@ function ReadHeader()
   // extract header from incoming message
   var header = incomingMessage.slice( 0, HEADER_LENGHT );
 
+  // TODO check header
+
   messageLength = header.readUInt16BE( 16 );
   messageType   = header.readUInt8( 18 );
+
+  if( messageLength < 19 || messageLength > 4096 )
+  {
+    var data = new Buffer( 2 );
+    data.writeUInt16BE( messageLength, 0 );
+
+    SendNotificationMessage( FSM.UniqueInstance.ERRCODES.HEADER_ERR, 2, data );
+  }
+
+  if( messageType > 4 )
+  {
+    var data = new Buffer( 1 );
+    data.writeUInt8( messageType, 0 );
+
+    SendNotificationMessage( FSM.UniqueInstance.ERRCODES.HEADER_ERR, 3, data );
+  }
 
   console.log( "Read header for incoming message of length " + messageLength + " and type " + messageType );
 
@@ -120,8 +136,9 @@ function SendOpenMessage( /* message parameters ? */ )
   // format message...
   WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.OPEN, msg );
 
-  msg.writeUInt8( Conf.BGP_Version, 19 ); // BGP version
-  msg.writeUInt16BE( Conf.AS_Number, 20 ); // AS_Number, Big Endian
+  msg.writeUInt8( FSM.UniqueInstance.BGP_Version, 19 ); // BGP version
+  console.log( FSM.UniqueInstance.AS_Number );
+  msg.writeUInt16BE( FSM.UniqueInstance.AS_Number, 20 ); // AS_Number, Big Endian
   msg.writeUInt16BE( Math.round( FSM.UniqueInstance.holdTimerValue / 1000 ), 22 );  // HoldTime, Big Endian
 
   // write the bgp identifier
@@ -163,15 +180,22 @@ function SendKeepAliveMessage()
   fsmSocket.write( msg );
 }
 
-function SendNotificationMessage( errCode, errSubcode )
+function SendNotificationMessage( errCode, errSubcode, data )
 {
-  var msg = new Buffer( 21 );
+  if( data === undefined )
+  {
+    data = new Buffer( 0 );
+  }
+
+  var msg = new Buffer( 21 + data.length );
 
   // format message...
   WriteHeader( FSM.UniqueInstance.MESSAGE_TYPES.NOTIFICATION, msg );
 
   msg.writeUInt8( errCode, 19 );
   msg.writeUInt8( errSubcode, 20 );
+
+  data.copy( msg, 21, 0 );
 
   // and bang !
   fsmSocket.write( msg );
