@@ -1,5 +1,1 @@
 A gonzo BGP finite state machine using node.js
-
-Ultimately the FSM underlying architecture should be extracted and
-available as a separated module, but for now there is this project to
-finish !

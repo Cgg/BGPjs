@@ -67,6 +67,20 @@ get back the equivalent message from it. It then goes to *OpenConfim* state.
 *OpenConfirm*
 ~~~~~~~~~~~~~
 
+Here, the FSM waits for a KeepAlive message from the peer, upon which it
+goes to *Established* state. The FSM itself sends a KeepAlive message when
+the KeepAlive timer times out. This means that the earliest of the two
+speakers sends a message. The latest goes to Established without sending a
+message.
+
+*Established*
+~~~~~~~~~~~~~
+
+This is the state where Update messages are exchanged. Upon reception of an
+Update or KeepAlive message, the Hold timer is resetted. When the KeepAlive
+timer expires, a KeepAlive message is sent. We see here why the KeepAlive
+timer value has to be smaller than the Hold timer value.
+
  - the FSM starts in *Idle* state.
  - In *Connect* and *Active* states, the FSM tries to establish a connection
    with its peer (configured beforehand).
@@ -77,6 +91,32 @@ get back the equivalent message from it. It then goes to *OpenConfim* state.
    is *OpenSent*, and the FSM is waiting for the equivalent Open message from
    its peer.
  - Once the Open message is received, and if it is correct
+
+Timers
+~~~~~~
+
+ - *ConnectRetry* : this timer tells the FSM when to retry to connect to
+   the peer, if the previous attempts failed
+ - *KeepAlive* : this timer tells the FSM to send a KeepAlive message to
+   the peer.
+ - *HoldTimer* : this timer acts as a watch dog for the state of the
+   connection with the peer. If this timer expires, it means that the peer
+   has been unable to send an Update or a KeepAlive during this period. It
+   is considered as dead and the connection is closed.
+
+Code
+----
+
+The FSM is considered as a collection of states, which are connected together
+by transitions. This transitions are triggered by events.
+
+The main container (``fsm.js``) holds the various variables and helpers functions (such
+as Open and Update message processing functions). On its creation, it
+constructs all the states (seen in ``state.js``) and connects them together.
+
+Other files include the networking functions in ``fsm_networking.js``, an
+event class in ``fsm_event.js`` and static configuration elements in
+``conf.js``.
 
 Conclusion
 ----------
